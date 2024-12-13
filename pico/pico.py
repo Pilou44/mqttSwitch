@@ -3,11 +3,10 @@
 
 from machine import Pin
 from time import sleep
-import network
 from umqtt.simple import MQTTClient
 import ujson
 import config
-from core import getId
+from core import getId, initialize_wifi
 
 # Define LED
 led = Pin('LED', Pin.OUT)
@@ -30,32 +29,6 @@ MQTT_SSL_PARAMS = {'server_hostname': MQTT_SERVER}
 CMD_TOPIC = f"{MQTT_TOPIC_LED}/set"
 STATE_TOPIC = f"{MQTT_TOPIC_LED}/state"
 
-# Init Wi-Fi Interface
-def initialize_wifi(ssid, password):
-    wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
-
-    # Connect to the network
-    wlan.connect(ssid, password)
-
-    # Wait for Wi-Fi connection
-    connection_timeout = 10
-    while connection_timeout > 0:
-        if wlan.status() >= 3:
-            break
-        connection_timeout -= 1
-        print('Waiting for Wi-Fi connection...')
-        sleep(1)
-
-    # Check if connection is successful
-    if wlan.status() != 3:
-        return False
-    else:
-        print('Connection successful!')
-        network_info = wlan.ifconfig()
-        print('IP address:', network_info[0])
-        return True
-
 # Connect to MQTT Broker
 def connect_mqtt():
     try:
@@ -71,11 +44,6 @@ def connect_mqtt():
         return client
     except Exception as e:
         print('Error connecting to MQTT:', e)
-
-# Subcribe to MQTT topics
-def subscribe(client, topic):
-    client.subscribe(topic)
-    print('Subscribe to topic:', topic)
 
 # Function to publish Home Assistant MQTT Discovery messages
 def publish_discovery():
@@ -137,7 +105,7 @@ def run():
         publish_discovery()
         client.set_callback(my_callback)
         
-        subscribe(client, CMD_TOPIC)
+        client.subscribe(CMD_TOPIC)
         
         # Continuously checking for messages
         while True:
