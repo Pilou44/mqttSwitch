@@ -47,12 +47,9 @@ def connect_mqtt():
 
 # Function to publish Home Assistant MQTT Discovery messages
 def publish_discovery():
-    pico_unique_id = getId()
-    switch_id = f"sw_{pico_unique_id}"
-
     payload = {
         "name": "Pico LED",
-        "unique_id": pico_unique_id,
+        "unique_id": UNIQUE_ID,
         "command_topic": CMD_TOPIC,
         "state_topic": STATE_TOPIC,
         "payload_on": "ON",
@@ -61,7 +58,7 @@ def publish_discovery():
         "device": {
             "manufacturer": "Wechant Loup",
             "model": "Pico LED",
-            "identifiers": pico_unique_id,
+            "identifiers": UNIQUE_ID,
         },
     }
     
