@@ -2,11 +2,14 @@
 # Complete project details at https://RandomNerdTutorials.com/raspberry-pi-pico-w-mqtt-micropython/
 
 from machine import Pin
-from time import sleep
+from time import sleep, sleep_ms
 from umqtt.simple import MQTTClient
 import ujson
 import config
 from core import getId, initialize_wifi
+
+from neopixel import NeoPixel
+import _thread
 
 # Define LED
 led = Pin('LED', Pin.OUT)
@@ -82,14 +85,58 @@ def my_callback(topic, message):
     if message == b'ON':
         print('Turning LED ON')
         led.value(1)  # Turn LED ON
+        switch_on()
         client.publish(STATE_TOPIC, "ON")
     elif message == b'OFF':
         print('Turning LED OFF')
         led.value(0)  # Turn LED OFF
+        switch_off()
         client.publish(STATE_TOPIC, "OFF")
     else:
          print('Unknown command')
 
+enabled = False
+numpix = 12
+pin = Pin(28, Pin.OUT)
+pixels = NeoPixel(pin, numpix)
+
+def switch_on():
+    enabled = True
+    pixels[0] = (255, 0, 0) # set to red, full brightness
+    pixels[1] = (0, 128, 0) # set to green, half brightness
+    pixels[2] = (0, 0, 64)  # set to blue, quarter brightness
+    pixels.write()
+    print("Launch thread")
+    _thread.start_new_thread(thread_loop, ())
+        
+def thread_loop():
+    print("Thread started")
+    global enabled
+    print(f"Emabled = {enabled}")
+    enabled = True
+    print(f"Emabled = {enabled}")
+    while (enabled):
+        sleep_ms(500)
+        rotate(pixels)
+    print("Thread ended")
+
+def switch_off():
+    global enabled
+    print("Switch off")
+    enabled = False
+    print(f"Emabled = {enabled}")
+    pixels[0] = (0, 0, 0)
+    pixels[1] = (0, 0, 0)
+    pixels[2] = (0, 0, 0)
+    pixels.write()
+    
+def rotate(np):
+    n = np.n
+    r, g, b = np[0]
+    for i in range(n - 1):
+        np[i] = np[i + 1]
+    np[n - 1] = (r, g, b)
+    np.write()
 
 def run():
     global client
@@ -115,7 +162,9 @@ while True:
         print('Run')
         run()
     except KeyboardInterrupt:
+        switch_off()
         machine.reset()
     except Exception as e:
+        switch_off()
         print(e)
         pass
