@@ -9,7 +9,7 @@ import config
 from core import getId, initialize_wifi
 
 from neopixel import NeoPixel
-from led_modes import snes
+from led_modes import snes, ps1
 
 # Define LED
 led = Pin('LED', Pin.OUT)
@@ -83,12 +83,12 @@ def my_callback(topic, message):
     # Check the content of the received message
     
     if message == b'ON':
-        print('Turning LED ON')
+        print('Turning ON')
         led.value(1)  # Turn LED ON
         switch_on()
         client.publish(STATE_TOPIC, "ON")
     elif message == b'OFF':
-        print('Turning LED OFF')
+        print('Turning OFF')
         led.value(0)  # Turn LED OFF
         switch_off()
         client.publish(STATE_TOPIC, "OFF")
@@ -103,13 +103,9 @@ pixels = NeoPixel(pin, numpix)
 def switch_on():
     global enabled
     enabled = True
-    
     n = pixels.n
     for i in range(n):
-        print(f"{i}")
-        print(f"{snes[i]}")
-        print(f"{pixels[i]}")
-        pixels[i] = snes[i]
+        pixels[i] = ps1[i]
     pixels.write()
 
 def switch_off():
@@ -148,7 +144,6 @@ def run():
         while True:
             start = ticks_ms()
             client.check_msg()
-            print(f"enabled {enabled}")
             if enabled:
                 rotate(pixels)
                 sleep_time_ms = 75
@@ -156,7 +151,6 @@ def run():
                 sleep_time_ms = 1000
             diff = ticks_diff(ticks_ms(), start)
             sleep_time = sleep_time_ms - diff
-            print(f"Loop running in {diff} ms, should sleep for {sleep_time} ms")
             sleep_ms(sleep_time)
 
 while True:
