@@ -9,7 +9,7 @@ import config
 from core import getId, initialize_wifi
 
 from neopixel import NeoPixel
-from led_modes import snes, ps1
+from led_modes import snes, ps1, wiiu, nes, n64
 
 # Define LED
 led = Pin('LED', Pin.OUT)
@@ -105,7 +105,7 @@ def switch_on():
     enabled = True
     n = pixels.n
     for i in range(n):
-        pixels[i] = ps1[i]
+        pixels[i] = n64[i]
     pixels.write()
 
 def switch_off():
