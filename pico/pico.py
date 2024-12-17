@@ -2,15 +2,14 @@
 # Complete project details at https://RandomNerdTutorials.com/raspberry-pi-pico-w-mqtt-micropython/
 
 from machine import Pin
-from time import sleep_ms
+from time import sleep_ms, ticks_ms, ticks_diff
 from umqtt.simple import MQTTClient
 import ujson
 import config
 from core import getId, initialize_wifi
 
 from neopixel import NeoPixel
-import _thread
-import time
+from led_modes import snes
 
 # Define LED
 led = Pin('LED', Pin.OUT)
@@ -104,9 +103,13 @@ pixels = NeoPixel(pin, numpix)
 def switch_on():
     global enabled
     enabled = True
-    pixels[0] = (255, 0, 0) # set to red, full brightness
-    pixels[1] = (0, 128, 0) # set to green, half brightness
-    pixels[2] = (0, 0, 64)  # set to blue, quarter brightness
+    
+    n = pixels.n
+    for i in range(n):
+        print(f"{i}")
+        print(f"{snes[i]}")
+        print(f"{pixels[i]}")
+        pixels[i] = snes[i]
     pixels.write()
 
 def switch_off():
@@ -143,15 +146,15 @@ def run():
         
         # Continuously checking for messages
         while True:
-            start = time.ticks_ms()
+            start = ticks_ms()
             client.check_msg()
             print(f"enabled {enabled}")
             if enabled:
                 rotate(pixels)
-                sleep_time_ms = 25
+                sleep_time_ms = 75
             else:
                 sleep_time_ms = 1000
-            diff = time.ticks_diff(time.ticks_ms(), start)
+            diff = ticks_diff(ticks_ms(), start)
             sleep_time = sleep_time_ms - diff
             print(f"Loop running in {diff} ms, should sleep for {sleep_time} ms")
             sleep_ms(sleep_time)
