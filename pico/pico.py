@@ -2,7 +2,7 @@
 # Complete project details at https://RandomNerdTutorials.com/raspberry-pi-pico-w-mqtt-micropython/
 
 from machine import Pin
-from time import sleep, sleep_ms
+from time import sleep_ms
 from umqtt.simple import MQTTClient
 import ujson
 import config
@@ -10,6 +10,7 @@ from core import getId, initialize_wifi
 
 from neopixel import NeoPixel
 import _thread
+import time
 
 # Define LED
 led = Pin('LED', Pin.OUT)
@@ -101,33 +102,20 @@ pin = Pin(28, Pin.OUT)
 pixels = NeoPixel(pin, numpix)
 
 def switch_on():
+    global enabled
     enabled = True
     pixels[0] = (255, 0, 0) # set to red, full brightness
     pixels[1] = (0, 128, 0) # set to green, half brightness
     pixels[2] = (0, 0, 64)  # set to blue, quarter brightness
     pixels.write()
-    print("Launch thread")
-    _thread.start_new_thread(thread_loop, ())
-        
-def thread_loop():
-    print("Thread started")
-    global enabled
-    print(f"Emabled = {enabled}")
-    enabled = True
-    print(f"Emabled = {enabled}")
-    while (enabled):
-        sleep_ms(500)
-        rotate(pixels)
-    print("Thread ended")
 
 def switch_off():
     global enabled
     print("Switch off")
     enabled = False
-    print(f"Emabled = {enabled}")
-    pixels[0] = (0, 0, 0)
-    pixels[1] = (0, 0, 0)
-    pixels[2] = (0, 0, 0)
+    n = pixels.n
+    for i in range(n):
+        pixels[i] = (0, 0, 0)
     pixels.write()
     
 def rotate(np):
@@ -140,6 +128,7 @@ def rotate(np):
 
 def run():
     global client
+    global enabled
     # Initialize Wi-Fi
     if not initialize_wifi(config.wifi_ssid, config.wifi_password):
         print('Error connecting to the network... exiting program')
@@ -153,9 +142,18 @@ def run():
         
         # Continuously checking for messages
         while True:
-            sleep(1)
+            start = time.ticks_ms()
             client.check_msg()
-            print('Loop running')
+            print(f"enabled {enabled}")
+            if enabled:
+                rotate(pixels)
+                sleep_time_ms = 25
+            else:
+                sleep_time_ms = 1000
+            diff = time.ticks_diff(time.ticks_ms(), start)
+            sleep_time = sleep_time_ms - diff
+            print(f"Loop running in {diff} ms, should sleep for {sleep_time} ms")
+            sleep_ms(sleep_time)
 
 while True:
     try:
