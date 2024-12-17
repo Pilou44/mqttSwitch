@@ -136,6 +136,7 @@ def run():
         # Connect to MQTT broker, start MQTT client
         client = connect_mqtt()
         publish_discovery()
+        client.publish(STATE_TOPIC, "OFF")
         client.set_callback(my_callback)
         
         client.subscribe(CMD_TOPIC)
