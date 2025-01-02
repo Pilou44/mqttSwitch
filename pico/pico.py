@@ -77,6 +77,7 @@ def publish_discovery():
 
 # Callback function that runs when you receive a message on subscribed topic
 def my_callback(topic, message):
+    global enabled
     # Perform desired actions based on the subscribed topic and response
     print('Received message on topic:', topic)
     print('Response:', message)
@@ -84,46 +85,56 @@ def my_callback(topic, message):
     
     if message == b'ON':
         print('Turning ON')
+        enabled = True
         led.value(1)  # Turn LED ON
-        switch_on()
+        switch_on(pixels0, wiiu)
+        switch_on(pixels1, n64)
+        switch_on(pixels2, snes)
+        switch_on(pixels3, nes)
         client.publish(STATE_TOPIC, "ON")
     elif message == b'OFF':
         print('Turning OFF')
+        enabled = False
         led.value(0)  # Turn LED OFF
-        switch_off()
+        switch_off(pixels0)
+        switch_off(pixels1)
+        switch_off(pixels2)
+        switch_off(pixels3)
         client.publish(STATE_TOPIC, "OFF")
     else:
          print('Unknown command')
 
 enabled = False
 numpix = 12
-pin = Pin(28, Pin.OUT)
-pixels = NeoPixel(pin, numpix)
+pin0 = Pin(28, Pin.OUT)
+pixels0 = NeoPixel(pin0, numpix)
+pin1 = Pin(27, Pin.OUT)
+pixels1 = NeoPixel(pin1, numpix)
+pin2 = Pin(26, Pin.OUT)
+pixels2 = NeoPixel(pin2, numpix)
+pin3 = Pin(22, Pin.OUT)
+pixels3 = NeoPixel(pin3, numpix)
 
-def switch_on():
-    global enabled
-    enabled = True
+def switch_on(pixels, mode):
     n = pixels.n
     for i in range(n):
-        pixels[i] = n64[i]
+        pixels[i] = mode[i]
     pixels.write()
 
-def switch_off():
+def switch_off(pixels):
     global enabled
-    print("Switch off")
-    enabled = False
     n = pixels.n
     for i in range(n):
         pixels[i] = (0, 0, 0)
     pixels.write()
     
-def rotate(np):
-    n = np.n
-    r, g, b = np[0]
+def rotate(pixels):
+    n = pixels.n
+    r0, g0, b0 = pixels[0]
     for i in range(n - 1):
-        np[i] = np[i + 1]
-    np[n - 1] = (r, g, b)
-    np.write()
+        pixels[i] = pixels[i + 1]
+    pixels[n - 1] = (r0, g0, b0)
+    pixels.write()
 
 def run():
     global client
@@ -145,7 +156,10 @@ def run():
             start = ticks_ms()
             client.check_msg()
             if enabled:
-                rotate(pixels)
+                rotate(pixels0)
+                rotate(pixels1)
+                rotate(pixels2)
+                rotate(pixels3)
                 sleep_time_ms = 75
             else:
                 sleep_time_ms = 1000
