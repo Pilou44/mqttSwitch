@@ -96,10 +96,7 @@ def my_callback(topic, message):
         print('Turning OFF')
         enabled = False
         led.value(0)  # Turn LED OFF
-        switch_off(pixels0)
-        switch_off(pixels1)
-        switch_off(pixels2)
-        switch_off(pixels3)
+        switch_off_all()
         client.publish(STATE_TOPIC, "OFF")
     else:
          print('Unknown command')
@@ -120,6 +117,12 @@ def switch_on(pixels, mode):
     for i in range(n):
         pixels[i] = mode[i]
     pixels.write()
+
+def switch_off_all():
+    switch_off(pixels0)
+    switch_off(pixels1)
+    switch_off(pixels2)
+    switch_off(pixels3)
 
 def switch_off(pixels):
     global enabled
@@ -146,7 +149,10 @@ def run():
         # Connect to MQTT broker, start MQTT client
         client = connect_mqtt()
         publish_discovery()
-        client.publish(STATE_TOPIC, "OFF")
+        if enabled:
+            client.publish(STATE_TOPIC, "ON")
+        else:
+            client.publish(STATE_TOPIC, "OFF")
         client.set_callback(my_callback)
         
         client.subscribe(CMD_TOPIC)
@@ -172,9 +178,9 @@ while True:
         print('Run')
         run()
     except KeyboardInterrupt:
-        switch_off()
+        switch_off_all()
         machine.reset()
     except Exception as e:
-        switch_off()
+        print('Exception')
         print(e)
         pass
